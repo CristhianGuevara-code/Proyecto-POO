@@ -46,21 +46,6 @@ namespace ComputersAPI.Services
         }
 
 
-        //public async Task<ResponseDto<List<ComponentDto>>> GetListAsync()
-        //{
-        //    var componetsEntity = await _context.Components.Include(c => c.CategoryComponent).ToListAsync();
-
-        //    var componentsDto = _mapper.Map<List<ComponentDto>>(componetsEntity);
-
-        //    return new ResponseDto<List<ComponentDto>>
-        //    {
-        //        StatusCode = HttpStatusCode.Ok,
-        //        Status = true,
-        //        Message = componetsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
-        //        Data = componentsDto
-        //    };
-        //}
-
         public async Task<ResponseDto<ComponentDto>> GetOneByIdAsync(Guid id)
         {
             var componentEntity = await _context.Components.Include(x => x.CategoryComponent).FirstOrDefaultAsync(x => x.Id == id);

@@ -44,20 +44,7 @@ namespace ComputersAPI.Services
             };
         }
 
-        //public async Task<ResponseDto<List<PeripheralDto>>> GetListAsync(Guid? categoryId = null)
-        //{
-        //    var peripheralsEntity = await _context.Peripherals.Include(p => p.CategoryPeripheral).ToListAsync();
-
-        //    var peripheralsDto = _mapper.Map<List<PeripheralDto>>(peripheralsEntity);
-
-        //    return new ResponseDto<List<PeripheralDto>>
-        //    {
-        //        StatusCode = HttpStatusCode.Ok,
-        //        Status = true,
-        //        Message = peripheralsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
-        //        Data = peripheralsDto
-        //    };
-        //}
+    
         public async Task<ResponseDto<PeripheralDto>> GetOneByIdAsync(Guid id)
         {
             var peripheralEntity = await _context.Peripherals.Include(x => x.CategoryPeripheral).FirstOrDefaultAsync(x => x.Id == id);

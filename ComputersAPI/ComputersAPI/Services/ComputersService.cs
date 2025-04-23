@@ -105,24 +105,41 @@ namespace ComputersAPI.Services
                 };
             }
 
-            if (dto.ComponentsIds != null && dto.ComponentsIds.Count != dto.ComponentsIds.Distinct().Count())
+            if (dto.ComponentsIds != null)
             {
-                return new ResponseDto<ComputerActionResponseDto>
+                var componentCategories = await _context.Components
+                    .Where(c => dto.ComponentsIds.Contains(c.Id))
+                    .Select(c => c.CategoryComponentId)
+                    .ToListAsync();
+
+                if (componentCategories.Count != componentCategories.Distinct().Count())
                 {
-                    StatusCode = HttpStatusCode.BAD_REQUEST,
-                    Status = false,
-                    Message = "No se puede asignar el mismo componente más de una vez."
-                };
+                    return new ResponseDto<ComputerActionResponseDto>
+                    {
+                        StatusCode = HttpStatusCode.BAD_REQUEST,
+                        Status = false,
+                        Message = "No se puede asignar más de un componente de la misma categoría."
+                    };
+                }
             }
 
-            if (dto.PeripheralsIds != null && dto.PeripheralsIds.Count != dto.PeripheralsIds.Distinct().Count())
+
+            if (dto.PeripheralsIds != null)
             {
-                return new ResponseDto<ComputerActionResponseDto>
+                var peripheralCategories = await _context.Peripherals
+                    .Where(p => dto.PeripheralsIds.Contains(p.Id))
+                    .Select(p => p.CategoryPeripheralId)
+                    .ToListAsync();
+
+                if (peripheralCategories.Count != peripheralCategories.Distinct().Count())
                 {
-                    StatusCode = HttpStatusCode.BAD_REQUEST,
-                    Status = false,
-                    Message = "No se puede asignar el mismo periférico más de una vez."
-                };
+                    return new ResponseDto<ComputerActionResponseDto>
+                    {
+                        StatusCode = HttpStatusCode.BAD_REQUEST,
+                        Status = false,
+                        Message = "No se puede asignar más de un periférico de la misma categoría."
+                    };
+                }
             }
 
 
@@ -220,22 +237,6 @@ namespace ComputersAPI.Services
              .ThenInclude(p => p.CategoryPeripheral)
      .FirstOrDefaultAsync(c => c.Id == computerEntity.Id);
 
-            //// Volvemos a consultar la computadora con sus relaciones
-            //var createdComputer = await _context.Computers
-            //    .Include(c => c.ComputerComponents)
-            //        .ThenInclude(cc => cc.Component)
-            //        .ThenInclude(c => c.CategoryComponent)
-            //    .Include(c => c.ComputerPeripherals)
-            //        .ThenInclude(cp => cp.Peripheral)
-            //        .ThenInclude(p => p.CategoryPeripheral)
-            //    .FirstOrDefaultAsync(x => x.Id == computerEntity.Id);
-
-            //var computerDto = _mapper.Map<ComputerDto>(createdComputer);
-
-            //// Calcular total
-            //var totalComponents = computerDto.Components?.Sum(c => c.Price) ?? 0;
-            //var totalPeripherals = computerDto.Peripherals?.Sum(p => p.Price) ?? 0;
-            //computerDto.TotalPrice = totalComponents + totalPeripherals;
 
             return new ResponseDto<ComputerActionResponseDto>
             {
@@ -318,16 +319,16 @@ namespace ComputersAPI.Services
             await _context.SaveChangesAsync();
 
             computerEntity.ComputerComponents = await _context.ComputerComponents
-    .Where(cc => cc.ComputerId == computerEntity.Id)
-    .Include(cc => cc.Component)
-        .ThenInclude(c => c.CategoryComponent)
-    .ToListAsync();
+            .Where(cc => cc.ComputerId == computerEntity.Id)
+            .Include(cc => cc.Component)
+            .ThenInclude(c => c.CategoryComponent)
+            .ToListAsync();
 
             computerEntity.ComputerPeripherals = await _context.ComputerPeripherals
-                .Where(cp => cp.ComputerId == computerEntity.Id)
-                .Include(cp => cp.Peripheral)
-                    .ThenInclude(p => p.CategoryPeripheral)
-                .ToListAsync();
+            .Where(cp => cp.ComputerId == computerEntity.Id)
+            .Include(cp => cp.Peripheral)
+            .ThenInclude(p => p.CategoryPeripheral)
+            .ToListAsync();
 
 
             return new ResponseDto<ComputerActionResponseDto>
@@ -338,60 +339,6 @@ namespace ComputersAPI.Services
                 Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
             };
         }
-
-
-        //public async Task<ResponseDto<ComputerActionResponseDto>> EditAsync(ComputerEditDto dto, Guid id)
-        //{
-        //    var computerEntity = await _context.Computers
-        //        .Include(c => c.ComputerComponents) //  Incluye relaciones existentes
-        //        .Include(c => c.ComputerPeripherals) //  Incluye relaciones existentes
-        //        .FirstOrDefaultAsync(x => x.Id == id);
-
-        //    if (computerEntity is null)
-        //    {
-        //        return new ResponseDto<ComputerActionResponseDto>
-        //        {
-        //            StatusCode = HttpStatusCode.NOT_FOUND,
-        //            Status = false,
-        //            Message = "Registro no encontrado",
-        //        };
-        //    }
-
-        //    //  Actualiza los datos básicos de la computadora
-        //    _mapper.Map<ComputerEditDto, ComputerEntity>(dto, computerEntity);
-
-        //    //  Elimina relaciones actuales
-        //    _context.ComputerComponents.RemoveRange(computerEntity.ComputerComponents);
-        //    _context.ComputerPeripherals.RemoveRange(computerEntity.ComputerPeripherals);
-
-        //    //  Agrega nuevas relaciones con Componentes
-        //    computerEntity.ComputerComponents = dto.ComponentsIds.Select(id => new ComputerComponentEntity
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        ComputerId = computerEntity.Id,
-        //        ComponentId = id
-        //    }).ToList();
-
-        //    //  Agrega nuevas relaciones con Periféricos
-        //    computerEntity.ComputerPeripherals = dto.PeripheralsIds.Select(id => new ComputerPeripheralEntity
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        ComputerId = computerEntity.Id,
-        //        PeripheralId = id
-        //    }).ToList();
-
-        //    _context.Computers.Update(computerEntity);
-        //    await _context.SaveChangesAsync();
-
-        //    return new ResponseDto<ComputerActionResponseDto>
-        //    {
-        //        StatusCode = HttpStatusCode.Ok,
-        //        Status = true,
-        //        Message = "Registro editado correctamente",
-        //        Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
-        //    };
-        //}
-
 
 
         public async Task<ResponseDto<ComputerActionResponseDto>> DeleteAsync(Guid id)

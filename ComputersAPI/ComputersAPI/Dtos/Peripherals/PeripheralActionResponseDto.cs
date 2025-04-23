@@ -10,6 +10,5 @@ namespace ComputersAPI.Dtos.Peripherals
         public string Model { get; set; }
         public decimal Price { get; set; }
         public Guid CategoryPeripheralId { get; set; }
-       // public CategoryPeripheralDto Category { get; set; }
     }
 }
